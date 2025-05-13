@@ -23,7 +23,7 @@ const authenticate = (req, res, next) => {
 };
 
 const authorizeAdmin = (req, res, next) => {
-    if (req.user.role !== 'admin') {
+    if (req.user.user_type !== 'admin') {
         return res.status(403).json({ 
             success: false,
             message: 'Admin access required' 
@@ -32,18 +32,4 @@ const authorizeAdmin = (req, res, next) => {
     next();
 };
 
-const authorizeStaff = (req, res, next) => {
-    if (req.user.role !== 'staff' && req.user.role !== 'admin') {
-        return res.status(403).json({
-            success: false,
-            message: 'Staff access required'
-        });
-    }
-    next();
-};
-
-module.exports = {
-    authenticate,
-    authorizeAdmin,
-    authorizeStaff
-};
+module.exports = { authenticate, authorizeAdmin };
