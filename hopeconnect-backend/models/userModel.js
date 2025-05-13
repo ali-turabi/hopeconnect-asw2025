@@ -29,7 +29,7 @@ const UserModel = {
         const [rows] = await db.execute(`SELECT * FROM users WHERE user_id = ?`, [userId]);
         return rows[0];
     },
-
+  
     async getAllUsers() {
         const [rows] = await db.execute(`SELECT * FROM users`);
         return rows;
