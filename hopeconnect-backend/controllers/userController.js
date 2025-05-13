@@ -110,70 +110,8 @@ async deleteUser(req, res) {
         }
     },
 
-    // async createStaff(req, res) {
-    //     try {
-    //         const staffId = await StaffModel.createStaff(req.body);
-    //         res.status(201).json({ message: 'Staff created', staff_id: staffId });
-    //     } catch (err) {
-    //         res.status(500).json({ error: err.message });
-    //     }
-    // },
-    async createStaff(req, res) {
-        try {
-            // Extract all possible fields
-            const { 
-                name, 
-                email, 
-                password, 
-                phone, 
-                address,
-                position, 
-                salary, 
-                hire_date 
-            } = req.body;
     
-            // Validate required fields
-            const requiredFields = ['name', 'email', 'password', 'position', 'salary'];
-            const missingFields = requiredFields.filter(field => !req.body[field]);
-            
-            if (missingFields.length > 0) {
-                return res.status(400).json({ 
-                    error: `Missing required fields: ${missingFields.join(', ')}` 
-                });
-            }
-    
-            // Create user and staff records
-            const result = await StaffModel.createStaff(
-                { name, email, password, phone, address }, // User data
-                { position, salary, hire_date }            // Staff data
-            );
-    
-            res.status(201).json({ 
-                message: 'Staff created successfully',
-                data: {
-                    user_id: result.user_id,
-                    staff_id: result.staff_id,
-                    name: result.name,
-                    email: result.email,
-                    phone: result.phone,
-                    address: result.address,
-                    position: result.position,
-                    salary: result.salary,
-                    hire_date: result.hire_date || new Date().toISOString().split('T')[0]
-                }
-            });
-        } catch (err) {
-            console.error('Error creating staff:', err);
-            
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(409).json({ error: 'Email already exists' });
-            }
-            res.status(500).json({ 
-                error: err.message || 'Failed to create staff member' 
-            });
-        }
-    },
-
+   
     async getStaffById(req, res) {
         try {
             const staffId = parseInt(req.params.id);
@@ -189,41 +127,7 @@ async deleteUser(req, res) {
         }
     },
 
-    async updateStaff(req, res) {
-        try {
-            const staffId = parseInt(req.params.id);
-            const { name, email, phone, address, position, salary, hire_date, is_active } = req.body;
     
-            // Validate position if provided
-            if (position) {
-                const validPositions = ['director', 'nurse', 'social_worker', 'caregiver', 'teacher', 'accountant', 'admin'];
-                if (!validPositions.includes(position)) {
-                    return res.status(400).json({ error: 'Invalid position value' });
-                }
-            }
-    
-            // Validate salary if provided
-            if (salary && (isNaN(salary) || salary <= 0)) {
-                return res.status(400).json({ error: 'Salary must be a positive number' });
-            }
-    
-            await StaffModel.updateStaff(
-                staffId,
-                { name, email, phone, address, is_active },
-                { position, salary, hire_date }
-            );
-    
-            // Fetch updated staff data to return
-            const updatedStaff = await StaffModel.getStaffById(staffId);
-            res.json({ 
-                message: 'Staff updated successfully',
-                data: updatedStaff
-            });
-        } catch (err) {
-            console.error('Update staff error:', err);
-            res.status(500).json({ error: err.message });
-        }
-    },
     async getAllUsers(req, res) {
         try {
             const users = await UserModel.getAllUsers();
@@ -281,7 +185,106 @@ async getAllStaff(req, res) {
         } catch (err) {
             res.status(500).json({ error: err.message });
         }
+    },
+    //********************************************** */
+    async createStaff(req, res) {
+        try {
+            // Extract all possible fields including orphanage_id
+            const { 
+                name, 
+                email, 
+                password, 
+                phone, 
+                address,
+                position, 
+                salary, 
+                hire_date,
+                orphanage_id  // New field
+            } = req.body;
+
+            // Validate required fields
+            const requiredFields = ['name', 'email', 'password', 'position', 'salary'];
+            const missingFields = requiredFields.filter(field => !req.body[field]);
+            
+            if (missingFields.length > 0) {
+                return res.status(400).json({ 
+                    error: `Missing required fields: ${missingFields.join(', ')}` 
+                });
+            }
+
+            // Create user and staff records
+            const result = await StaffModel.createStaff(
+                { name, email, password, phone, address }, // User data
+                { position, salary, hire_date, orphanage_id } // Staff data
+            );
+
+            res.status(201).json({ 
+                message: 'Staff created successfully',
+                data: {
+                    user_id: result.user_id,
+                    staff_id: result.staff_id,
+                    name: result.name,
+                    email: result.email,
+                    phone: result.phone,
+                    address: result.address,
+                    position: result.position,
+                    salary: result.salary,
+                    hire_date: result.hire_date || new Date().toISOString().split('T')[0],
+                    orphanage_id: result.orphanage_id || null
+                }
+            });
+        } catch (err) {
+            console.error('Error creating staff:', err);
+            
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(409).json({ error: 'Email already exists' });
+            }
+            res.status(500).json({ 
+                error: err.message || 'Failed to create staff member' 
+            });
+        }
+    },
+
+    async updateStaff(req, res) {
+        try {
+            const staffId = parseInt(req.params.id);
+            const { name, email, phone, address, position, salary, hire_date, orphanage_id, is_active } = req.body;
+    
+            // Validate position if provided
+            if (position) {
+                const validPositions = ['director', 'nurse', 'social_worker', 'caregiver', 'teacher', 'accountant', 'admin'];
+                if (!validPositions.includes(position)) {
+                    return res.status(400).json({ error: 'Invalid position value' });
+                }
+            }
+    
+            // Validate salary if provided
+            if (salary && (isNaN(salary) || salary <= 0)) {
+                return res.status(400).json({ error: 'Salary must be a positive number' });
+            }
+    
+            await StaffModel.updateStaff(
+                staffId,
+                { name, email, phone, address, is_active },
+                { position, salary, hire_date, orphanage_id }
+            );
+    
+            // Fetch updated staff data to return
+            const updatedStaff = await StaffModel.getStaffById(staffId);
+            res.json({ 
+                message: 'Staff updated successfully',
+                data: updatedStaff
+            });
+        } catch (err) {
+            console.error('Update staff error:', err);
+            res.status(500).json({ 
+                error: err.message || 'Failed to update staff member' 
+            });
+        }
     }
+
+
+
 };
 
 module.exports = UserController;

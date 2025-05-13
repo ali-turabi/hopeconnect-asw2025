@@ -1,4 +1,3 @@
-// models/staffModel.js
 const db = require('../config/db');
 
 const StaffModel = {
@@ -7,7 +6,7 @@ const StaffModel = {
         try {
             connection = await db.getConnection();
             await connection.beginTransaction();
-    
+
             // 1. Create user with all available fields
             const [userResult] = await connection.execute(
                 `INSERT INTO users 
@@ -21,22 +20,23 @@ const StaffModel = {
                     userData.address || null, // Make optional
                 ]
             );
-            
+
             const userId = userResult.insertId;
-    
-            // 2. Create staff record
+
+            // 2. Create staff record with orphanage_id
             const [staffResult] = await connection.execute(
                 `INSERT INTO staff 
-                (user_id, position, salary, hire_date) 
-                VALUES (?, ?, ?, ?)`,
+                (user_id, position, salary, hire_date, orphanage_id) 
+                VALUES (?, ?, ?, ?, ?)`,
                 [
                     userId,
                     staffData.position,
                     staffData.salary,
-                    staffData.hire_date || new Date().toISOString().split('T')[0] // Default to today
+                    staffData.hire_date || new Date().toISOString().split('T')[0], // Default to today
+                    staffData.orphanage_id || null  // Include orphanage_id
                 ]
             );
-    
+
             await connection.commit();
             return {
                 user_id: userId,
@@ -54,7 +54,7 @@ const StaffModel = {
 
     async getStaffById(staffId) {
         const [rows] = await db.execute(
-            `SELECT s.*, u.name, u.email, u.phone, u.address, u.is_active as user_active
+            `SELECT s.*, u.name, u.email, u.phone, u.address, u.is_active as user_active, s.orphanage_id
              FROM staff s
              JOIN users u ON s.user_id = u.user_id
              WHERE s.staff_id = ?`, 
@@ -63,113 +63,105 @@ const StaffModel = {
         return rows[0];
     },
 
-   // In StaffModel.js
-  // models/staffModel.js
-async getAllStaff() {
-    try {
-        const [rows] = await db.execute(
-            `SELECT 
-                s.staff_id,
-                s.user_id,
-                s.position,
-                s.salary,
-                s.hire_date,
-                u.name,
-                u.email,
-                u.phone,
-                u.address,
-                u.user_type,
-                u.is_active as user_active
-             FROM staff s
-             JOIN users u ON s.user_id = u.user_id`
-        );
-        
-        return rows || [];
-    } catch (err) {
-        console.error('Database error:', {
-            error: err,
-            sqlState: err.sqlState,
-            sqlMessage: err.sqlMessage,
-            sql: err.sql
-        });
-        throw new Error('Failed to fetch staff data: ' + err.message);
-    }
-},
-
-   // In StaffModel.js
-   async updateStaff(staffId, userData, staffData) {
-    let connection;
-    try {
-        connection = await db.getConnection();
-        await connection.beginTransaction();
-
-        // 1. Get user_id first
-        const [staff] = await connection.execute(
-            `SELECT user_id FROM staff WHERE staff_id = ?`, 
-            [staffId]
-        );
-        if (!staff.length) throw new Error('Staff not found');
-
-        // 2. Filter out undefined values and build update queries
-        const filteredUserData = Object.fromEntries(
-            Object.entries(userData).filter(([_, v]) => v !== undefined)
-        );
-        const filteredStaffData = Object.fromEntries(
-            Object.entries(staffData).filter(([_, v]) => v !== undefined)
-        );
-
-        // 3. Update user table if there's data to update
-        if (Object.keys(filteredUserData).length > 0) {
-            const userSet = Object.keys(filteredUserData).map(k => `${k} = ?`).join(', ');
-            await connection.execute(
-                `UPDATE users SET ${userSet} WHERE user_id = ?`,
-                [...Object.values(filteredUserData), staff[0].user_id]
+    async getAllStaff() {
+        try {
+            const [rows] = await db.execute(
+                `SELECT 
+                    s.staff_id,
+                    s.user_id,
+                    s.position,
+                    s.salary,
+                    s.hire_date,
+                    u.name,
+                    u.email,
+                    u.phone,
+                    u.address,
+                    u.user_type,
+                    u.is_active as user_active,
+                    s.orphanage_id
+                FROM staff s
+                JOIN users u ON s.user_id = u.user_id`
             );
+
+            return rows || [];
+        } catch (err) {
+            console.error('Database error:', err);
+            throw new Error('Failed to fetch staff data: ' + err.message);
         }
+    },
 
-        // 4. Update staff table if there's data to update
-        if (Object.keys(filteredStaffData).length > 0) {
-            const staffSet = Object.keys(filteredStaffData).map(k => `${k} = ?`).join(', ');
-            await connection.execute(
-                `UPDATE staff SET ${staffSet} WHERE staff_id = ?`,
-                [...Object.values(filteredStaffData), staffId]
-            );
-        }
-
-        await connection.commit();
-        return true;
-    } catch (err) {
-        if (connection) await connection.rollback();
-        throw err;
-    } finally {
-        if (connection) connection.release();
-    }
-},
-
-    async deleteStaff(staffId) {
+    async updateStaff(staffId, userData, staffData) {
         let connection;
         try {
             connection = await db.getConnection();
             await connection.beginTransaction();
 
-            // Delete staff (user will be deleted automatically due to ON DELETE CASCADE)
-            const [result] = await connection.execute(
-                `DELETE FROM staff WHERE staff_id = ?`,
+            // 1. Get user_id first
+            const [staff] = await connection.execute(
+                `SELECT user_id FROM staff WHERE staff_id = ?`, 
                 [staffId]
             );
-            
-            if (result.affectedRows === 0) {
-                throw new Error('Staff not found');
+            if (!staff.length) throw new Error('Staff not found');
+
+            // 2. Filter out undefined values and build update queries
+            const filteredUserData = Object.fromEntries(
+                Object.entries(userData).filter(([_, v]) => v !== undefined)
+            );
+            const filteredStaffData = Object.fromEntries(
+                Object.entries(staffData).filter(([_, v]) => v !== undefined)
+            );
+
+            // 3. Update user and staff records
+            if (Object.keys(filteredUserData).length > 0) {
+                await connection.execute(
+                    `UPDATE users SET 
+                    name = ?, email = ?, phone = ?, address = ?
+                    WHERE user_id = ?`,
+                    [
+                        filteredUserData.name,
+                        filteredUserData.email,
+                        filteredUserData.phone,
+                        filteredUserData.address,
+                        staff[0].user_id
+                    ]
+                );
+            }
+
+            if (Object.keys(filteredStaffData).length > 0) {
+                await connection.execute(
+                    `UPDATE staff SET 
+                    position = ?, salary = ?, hire_date = ?, orphanage_id = ?
+                    WHERE staff_id = ?`,
+                    [
+                        filteredStaffData.position,
+                        filteredStaffData.salary,
+                        filteredStaffData.hire_date || new Date().toISOString().split('T')[0],
+                        filteredStaffData.orphanage_id || null,
+                        staffId
+                    ]
+                );
             }
 
             await connection.commit();
-            return true;
+            return this.getStaffById(staffId);  // Return the updated staff record
         } catch (err) {
             if (connection) await connection.rollback();
             throw err;
         } finally {
             if (connection) connection.release();
         }
+    },
+
+    async deleteStaff(staffId) {
+        const [staff] = await db.execute(
+            `SELECT user_id FROM staff WHERE staff_id = ?`, 
+            [staffId]
+        );
+        if (!staff.length) throw new Error('Staff not found');
+
+        // Delete staff and user records
+        await db.execute(`DELETE FROM staff WHERE staff_id = ?`, [staffId]);
+        await db.execute(`DELETE FROM users WHERE user_id = ?`, [staff[0].user_id]);
     }
 };
 
