@@ -1,5 +1,5 @@
 import {Router} from 'express'
-import { getAllCampaigns,getCampaignById,insertCampaign,getOrganizationId} from '../models/emergencyCampaignModel.js';
+import { getAllCampaigns,getCampaignByTitle,insertCampaign,checkOrphanageExists,assignUserToCampaign} from '../models/emergencyCampaignModel.js';
 const router = Router();
 
     router.get('/emergancyCampings', async(req,res)=>{
@@ -11,8 +11,8 @@ const router = Router();
           }
     });
 
-    router.get('/emergancyCampings/:id', async (req, res) => {        try {
-            const campaign = await getCampaignById(req.params.id);
+    router.get('/emergancyCampings/:title', async (req, res) => {        try {
+            const campaign = await getCampaignByTitle(req.params.title);
             if (!campaign) {
               return res.status(404).json({ message: 'there are no Campaign founded' });
             }
@@ -23,68 +23,75 @@ const router = Router();
     });
 
     router.post('/emergencyCampaigns', async (req, res) => {
-        try {
-          const {
+    try {
+        const { orphanageId, title, description, type, goalAmount } = req.body;
+
+        
+        const missingFields = [];
+        if (!orphanageId) missingFields.push('orphanageId');
+        if (!title) missingFields.push('title');
+        if (!description) missingFields.push('description');
+        if (!goalAmount) missingFields.push('goalAmount');
+
+        if (missingFields.length > 0) {
+            return res.status(400).json({
+                message: `Missing required fields: ${missingFields.join(', ')}`
+            });
+        }
+
+        if (isNaN(goalAmount) || Number(goalAmount) <= 0) {
+            return res.status(400).json({ message: 'goalAmount must be a positive number' });
+        }
+
+        if (!Number.isInteger(Number(orphanageId))) {
+            return res.status(400).json({ message: 'orphanageId must be an integer' });
+        }
+
+        const orphanageExists = await checkOrphanageExists(orphanageId);
+        if (!orphanageExists) {
+            return res.status(404).json({ message: 'Orphanage not found' });
+        }
+
+        const result = await insertCampaign(
+            orphanageId,
             title,
             description,
-            goal_amount,
-            start_date,
-            end_date,
-            organization_id
-          } = req.body;
-          const missingFields = [];
-          if (!title) missingFields.push('title');
-          if (!description) missingFields.push('description');
-          if (!goal_amount) missingFields.push('goal_amount');
-          if (!start_date) missingFields.push('start_date');
-          if (!end_date) missingFields.push('end_date');
-          if (!organization_id) missingFields.push('organization_id');
-      
-          if (missingFields.length > 0) {
-            return res.status(400).json({
-              message: `Missing required fields: ${missingFields.join(', ')}`
-            });
-          }
-          if (isNaN(goal_amount) || Number(goal_amount) <= 0) {
-            return res.status(400).json({ message: 'goal_amount must be a positive number' });
-          }
+            type,
+            goalAmount
+        );
 
-          if (!Number.isInteger(Number(organization_id))) {
-            return res.status(400).json({ message: 'organization_id must be an integer' });
-          }
-          const start = new Date(start_date);
-          const end = new Date(end_date);
-          if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-            return res.status(400).json({ message: 'Invalid start_date or end_date format' });
-          }
-          if (start >= end) {
-            return res.status(400).json({ message: 'start_date must be before end_date' });
-          }
-          const orgExists = await getOrganizationId(organization_id);
-          if (!orgExists) {
-            return res.status(404).json({ message: 'Organization not found' });
-          }
-          const result = await insertCampaign(title, description, goal_amount, start_date, end_date, organization_id);
-          const newCampaign = {
-            id: result.insertId, 
+        const newCampaign = {
+            id: result.insertId,
+            orphanageId,
             title: title.trim(),
             description: description.trim(),
-            goal_amount,
-            start_date,
-            end_date,
-            status: 'active',
-            organization_id
-          };
-      
-          res.status(201).json({
-            message: 'Campaign created successfully',
+            type: type || null,
+            goalAmount,
+            collectedAmount: 0.00,
+            isActive: true
+        };
+
+        res.status(201).json({
+            message: 'Emergency campaign created successfully',
             campaign: newCampaign
-          });
-      
+        });
+
+    } catch (err) {
+        console.error('Error creating emergency campaign:', err);
+        res.status(500).json({ 
+            message: 'Failed to create emergency campaign',
+            error: err.message 
+        });
+    }
+    });
+
+    router.post('/joinEmergencyCampaigns',async(req,res)=>{
+        const { user_name, campaign_title } = req.body;
+        try {
+        const result = await assignUserToCampaign(user_name, campaign_title);
+        res.status(200).json({ message: 'User successfully assigned to the emergency campaign', result });
         } catch (err) {
-          console.error('Error creating campaign:', err);
-          res.status(500).json({ message: err.message });
-        }
-      });
-      
-    export default router;
+         res.status(500).json({ message: err.message });
+        }  
+    });
+export default router;
