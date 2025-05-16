@@ -82,3 +82,14 @@ export async function deletePartnerByName(name) {
 
   return result;
 }
+
+export async function getPartnersByStatus(status) {
+  const sql = 'SELECT * FROM partners WHERE status = ?';
+  const [rows] = await db.query(sql, [status]);
+
+  if (!rows || rows.length === 0) {
+    throw new Error('No partners found with this status.');
+  }
+
+  return rows;
+}

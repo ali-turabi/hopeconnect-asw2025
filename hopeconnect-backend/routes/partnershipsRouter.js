@@ -1,5 +1,5 @@
 import {Router} from 'express'
-import { getAllPartners,getPartnerByName,insertPartner,updatePartnerByName,deletePartnerByName} from '../models/partnershipsModel.js';
+import { getAllPartners,getPartnerByName,insertPartner,updatePartnerByName,deletePartnerByName,getPartnersByStatus} from '../models/partnershipsModel.js';
 const router = Router();
 
 router.get('/partners', async (req, res) => {
@@ -49,6 +49,17 @@ router.delete('/partner/:name', async (req, res) => {
   } catch (err) {
     const status = err.message.includes('not found') ? 404 : 400;
     res.status(status).json({ error: err.message });
+  }
+});
+
+router.get('/partners/status/:status', async (req, res) => {
+  try {
+    const status = req.params.status;
+    const partners = await getPartnersByStatus(status);
+    res.json(partners);
+  } catch (err) {
+    const statusCode = err.message.includes('No partners') ? 404 : 500;
+    res.status(statusCode).json({ error: err.message });
   }
 });
 
