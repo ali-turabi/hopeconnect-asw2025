@@ -4,8 +4,6 @@ const router = express.Router();
 const orphanController = require('../controllers/orphanController');
 const verifyAdminStaff = require('../middleware/verifyAdminStaff');
 const verifyAnyStaff = require('../middleware/verifyAnyStaff');
-router.get('/non-sponsored', verifyAnyStaff, orphanController.getNonSponsoredOrphans);
-
 // POST /api/orphans/add
 router.post('/add', verifyAdminStaff, orphanController.addOrphan);
 
