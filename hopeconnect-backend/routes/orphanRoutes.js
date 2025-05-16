@@ -5,10 +5,16 @@ const orphanController = require('../controllers/orphanController');
 const verifyAdminStaff = require('../middleware/verifyAdminStaff');
 const verifyAnyStaff = require('../middleware/verifyAnyStaff');
 
-// POST /api/orphans/add - Requires admin privileges
+// POST /api/orphans/add
 router.post('/add', verifyAdminStaff, orphanController.addOrphan);
 
-// GET /api/orphans/all - Requires any staff privileges
+// GET /api/orphans/all
 router.get('/all', verifyAnyStaff, orphanController.getAllOrphans);
+
+// NEW: GET /api/orphans/:id
+router.get('/:id', verifyAnyStaff, orphanController.getOrphan);
+router.patch('/:id/status', verifyAdminStaff, orphanController.toggleActiveStatus);
+router.delete('/:id', verifyAdminStaff, orphanController.deleteOrphan);
+
 
 module.exports = router;
