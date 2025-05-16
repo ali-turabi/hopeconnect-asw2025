@@ -52,3 +52,13 @@ exports.deleteOrphan = async (orphanId) => {
     );
     return result.affectedRows;
 };
+exports.updateOrphanAdmin = async (orphanId, updateData) => {
+    const [result] = await db.query(
+        'UPDATE orphans SET ? WHERE orphan_id = ?',
+        [updateData, orphanId]
+    );
+    return {
+        affectedRows: result.affectedRows,
+        changedFields: Object.keys(updateData)
+    };
+};

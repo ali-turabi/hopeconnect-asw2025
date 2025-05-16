@@ -220,3 +220,121 @@ exports.deleteOrphan = async (req, res) => {
         });
     }
 };
+exports.updateOrphanAdmin = async (req, res) => {
+    try {
+        const orphanId = parseInt(req.params.id);
+        if (isNaN(orphanId)) {
+            return res.status(400).json({ error: 'Invalid orphan ID format' });
+        }
+
+        // Allowed fields for update
+        const allowedFields = [
+            'name',
+            'birth_date',
+            'gender',
+            'health_condition',
+            'education_level',
+            'school_name',
+            'photo_url',
+            'is_active'
+        ];
+
+        // Filter out invalid fields
+        const updateData = {};
+        Object.keys(req.body).forEach(key => {
+            if (allowedFields.includes(key)) {
+                updateData[key] = req.body[key];
+            }
+        });
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({ 
+                error: 'No valid fields provided',
+                allowedFields 
+            });
+        }
+
+        const { affectedRows, changedFields } = 
+            await orphanModel.updateOrphanAdmin(orphanId, updateData);
+
+        if (affectedRows === 0) {
+            return res.status(404).json({ error: 'Orphan not found' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Orphan updated successfully',
+            updatedFields: changedFields,
+            orphanId
+        });
+
+    } catch (err) {
+        console.error('Admin update error:', err);
+        res.status(500).json({
+            error: 'Update failed',
+            details: process.env.NODE_ENV === 'development' ? {
+                message: err.message,
+                sqlError: err.sqlMessage
+            } : undefined
+        });
+    }
+};
+exports.getOrphan = async (req, res) => {
+    try {
+        // Debug: Log the incoming ID
+        console.log('Received ID parameter:', req.params.id);
+        
+        // Validate ID exists
+        if (!req.params.id) {
+            return res.status(400).json({
+                error: 'Missing orphan ID',
+                message: 'Please provide an orphan ID in the URL'
+            });
+        }
+
+        // Convert and validate ID
+        const orphanId = parseInt(req.params.id, 10);
+        if (isNaN(orphanId) || orphanId <= 0 || !Number.isInteger(orphanId)) {
+            return res.status(400).json({
+                error: 'Invalid orphan ID format',
+                message: 'Orphan ID must be a positive whole number',
+                received: req.params.id,
+                expected: 'Example: 123'
+            });
+        }
+
+        // Rest of your controller logic...
+        const orphanageFilter = req.user.position === 'admin' ? null : req.user.orphanage_id;
+        const orphan = await orphanModel.getOrphanById(orphanId, orphanageFilter);
+
+        if (!orphan) {
+            return res.status(404).json({ 
+                error: 'Orphan not found',
+                attemptedId: orphanId,
+                existsInDatabase: await checkIfOrphanExists(orphanId) // Helper function
+            });
+        }
+
+        res.json({ success: true, data: orphan });
+
+    } catch (err) {
+        console.error('Get orphan error:', {
+            error: err,
+            params: req.params,
+            user: req.user
+        });
+        res.status(500).json({
+            error: 'Server error during orphan lookup',
+            details: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+};
+
+// Helper function
+async function checkIfOrphanExists(orphanId) {
+    const [result] = await db.query(
+        'SELECT 1 FROM orphans WHERE orphan_id = ? LIMIT 1', 
+        [orphanId]
+    );
+    return result.length > 0;
+}
