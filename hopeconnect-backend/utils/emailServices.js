@@ -1,23 +1,20 @@
 import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
 
-dotenv.config(); // Load variables from .env
-
-export const sendAssignmentEmail = async (toEmail, userName, campaignTitle) => {
-  const transporter = nodemailer.createTransport({
-    service: 'gmail',
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // or use your SMTP server
     auth: {
-      user: process.env.EMAIL_USER,        // Your Gmail address
-      pass: process.env.EMAIL_PASSWORD     // Your App Password
+        user: 'your_email@gmail.com',
+        pass: 'your_app_password' // Use app password if using Gmail
     }
-  });
+});
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: toEmail,
-    subject: `Assignment to Emergency Campaign: ${campaignTitle}`,
-    text: `Hello ${userName},\n\nYou have been successfully assigned to the emergency campaign: ${campaignTitle}.\n\nThank you for your support!`
-  };
+export async function sendEmailToDonors(recipients, subject, htmlContent) {
+    const mailOptions = {
+        from: 'your_email@gmail.com',
+        to: recipients, // array or comma-separated string
+        subject,
+        html: htmlContent
+    };
 
-  await transporter.sendMail(mailOptions);
-};
+    return transporter.sendMail(mailOptions);
+}
