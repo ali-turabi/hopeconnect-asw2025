@@ -181,6 +181,76 @@ class OrphanageController {
             });
         }
     }
+        static async addToBudget(req, res) {
+        try {
+            const { id } = req.params;
+            const { amount } = req.body;
+
+            if (!amount || isNaN(amount)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Valid amount is required'
+                });
+            }
+
+            const affectedRows = await Orphanage.updateBudget(id, parseFloat(amount), 'add');
+            
+            if (affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Orphanage not found'
+                });
+            }
+
+            const updatedOrphanage = await Orphanage.findById(id);
+            res.status(200).json({
+                success: true,
+                data: updatedOrphanage,
+                message: `Added ${amount} to orphanage budget successfully`
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
+
+    // Subtract from orphanage budget (admin only)
+    static async subtractFromBudget(req, res) {
+        try {
+            const { id } = req.params;
+            const { amount } = req.body;
+
+            if (!amount || isNaN(amount)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Valid amount is required'
+                });
+            }
+
+            const affectedRows = await Orphanage.updateBudget(id, parseFloat(amount), 'subtract');
+            
+            if (affectedRows === 0) {
+                return res.status(404).json({
+                    success: false,
+                    message: 'Orphanage not found'
+                });
+            }
+
+            const updatedOrphanage = await Orphanage.findById(id);
+            res.status(200).json({
+                success: true,
+                data: updatedOrphanage,
+                message: `Subtracted ${amount} from orphanage budget successfully`
+            });
+        } catch (error) {
+            res.status(500).json({
+                success: false,
+                message: error.message
+            });
+        }
+    }
 }
 
 module.exports = OrphanageController;
