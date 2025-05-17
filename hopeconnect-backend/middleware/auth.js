@@ -53,8 +53,32 @@ const authorizeSponsor = (req, res, next) => {
   next();
 };
 
+// ✅ NEW: Donor authorization
+const authorizeDonor = (req, res, next) => {
+  const userRole = req.user.role || req.user.user_type || req.user.userRole;
+  
+  if (!userRole) {
+    console.error('User object missing role:', req.user);
+    return res.status(403).json({
+      success: false,
+      message: 'Role information missing in token',
+      yourUserObject: req.user
+    });
+  }
+
+  if (userRole.toLowerCase() !== 'donor') {
+    return res.status(403).json({
+      success: false,
+      message: `Donor access required. Your role: ${userRole}`
+    });
+  }
+
+  next();
+};
+
 module.exports = { 
   authenticate, 
-  authorizeAdmin,  // Now properly exported
-  authorizeSponsor 
+  authorizeAdmin, 
+  authorizeSponsor,
+  authorizeDonor  // ✅ Export it
 };
