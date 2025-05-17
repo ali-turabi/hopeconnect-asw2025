@@ -1,4 +1,4 @@
-import db from '../db/db.js';
+import db from '../config/dbConfig.js';
 export async function getAllDonations() {
 const [rows] = await db.query('SELECT * FROM donations');
 
