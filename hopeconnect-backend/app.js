@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const userRoutes = require('./routes/userRoutes');
 const orphanageRoutes = require('./routes/orphanageRoutes');
-const orphanRoutes = require('./routes/orphan');
+const orphanRoutes = require('./routes/orphanRoutes');
 const bodyParser = require('body-parser');
 const sponsorshipRoutes = require('./routes/sponsorshipRoutes');
 

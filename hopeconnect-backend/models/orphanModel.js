@@ -62,3 +62,16 @@ exports.updateOrphanAdmin = async (orphanId, updateData) => {
         changedFields: Object.keys(updateData)
     };
 };
+// Add this new method to your model
+exports.getNonSponsoredOrphans = async (orphanageId = null) => {
+    let query = 'SELECT * FROM orphans WHERE is_sponsored = 0 AND is_active = 1';
+    const params = [];
+    
+    if (orphanageId) {
+        query += ' AND orphanage_id = ?';
+        params.push(orphanageId);
+    }
+    
+    const [orphans] = await db.query(query, params);
+    return orphans;
+};

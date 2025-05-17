@@ -338,3 +338,27 @@ async function checkIfOrphanExists(orphanId) {
     );
     return result.length > 0;
 }
+// Add this new controller method
+exports.getNonSponsoredOrphans = async (req, res) => {
+    try {
+        // Staff can only see orphans from their orphanage
+        // Admins can see all orphans (no filter)
+        const orphanageFilter = req.user && req.user.position === 'staff' ? req.user.orphanage_id : null;
+
+        const orphans = await orphanModel.getNonSponsoredOrphans(orphanageFilter);
+
+        return res.status(200).json({
+            success: true,
+            count: orphans.length,
+            data: orphans
+        });
+
+    } catch (err) {
+        console.error('Error fetching non-sponsored orphans:', err);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve non-sponsored orphans',
+            error: process.env.NODE_ENV === 'development' ? err.message : undefined
+        });
+    }
+};
