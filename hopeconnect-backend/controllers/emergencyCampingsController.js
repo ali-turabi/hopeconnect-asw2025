@@ -1,6 +1,6 @@
-import { getAllCampaigns,getCampaignByTitle,insertCampaign,checkOrphanageExists,assignUserToCampaign,deleteCampaignByTitle,donateToCampaignByName,getUsersWithEmergencyCampaigns} from '../models/emergencyCampaignModel.js';
+import { getAllCampaigns,getCampaignByTitle,insertCampaign,checkOrphanageExists,assignUserToCampaign,deleteCampaignByTitle,donateToCampaignByName,getUsersWithEmergencyCampaigns,getUsersToNotify} from '../models/emergencyCampaignModel.js';
 
-
+import { sendEmail } from '../utils/emailServices.js';
 export const fetchAllCampaigns = async (req, res) => {
   try {
     const campaigns = await getAllCampaigns();
@@ -40,19 +40,16 @@ export const removeCampaignByTitle = async (req, res) => {
 export const createCampaign = async (req, res) => {
   try {
     const { orphanageId, title, description, type, goalAmount } = req.body;
-
     const missingFields = [];
     if (!orphanageId) missingFields.push('orphanageId');
     if (!title) missingFields.push('title');
     if (!description) missingFields.push('description');
     if (!goalAmount) missingFields.push('goalAmount');
-
     if (missingFields.length > 0) {
       return res.status(400).json({
-        message: `Missing required fields: ${missingFields.join(', ')}`
+        message: `Missing required fields: ${missingFields.join(', ')}`,
       });
     }
-
     if (isNaN(goalAmount) || Number(goalAmount) <= 0) {
       return res.status(400).json({ message: 'goalAmount must be a positive number' });
     }
@@ -60,32 +57,47 @@ export const createCampaign = async (req, res) => {
     if (!Number.isInteger(Number(orphanageId))) {
       return res.status(400).json({ message: 'orphanageId must be an integer' });
     }
-
     const orphanageExists = await checkOrphanageExists(orphanageId);
     if (!orphanageExists) {
       return res.status(404).json({ message: 'Orphanage not found' });
     }
-
     const result = await insertCampaign(orphanageId, title, description, type, goalAmount);
-
     const newCampaign = {
       id: result.insertId,
-      orphanageId,
+      orphanageId: Number(orphanageId),
       title: title.trim(),
       description: description.trim(),
       type: type || null,
-      goalAmount,
-      collectedAmount: 0.00,
-      isActive: true
+      goalAmount: Number(goalAmount),
+      collectedAmount: 0.0,
+      isActive: true,
     };
 
-    res.status(201).json({
-      message: 'Emergency campaign created successfully',
-      campaign: newCampaign
-    });
+    // Get users to notify
+    const usersToNotify = await getUsersToNotify();
 
+    const subject = `🚨 New Emergency Campaign: ${title}`;
+    const htmlContent = `
+      <h2>${orphanageExists.name}</h2>
+      <p>${description}</p>
+      <p><strong>Goal:</strong> $${goalAmount}</p>
+      <p>Please support or share this campaign ❤️</p>
+    `;
+
+    // Send emails in parallel (optional: limit concurrency if many users)
+    await Promise.all(
+      usersToNotify.map(user =>
+        sendEmail(user.email, subject, htmlContent, `${title}: ${description}`)
+      )
+    );
+
+    return res.status(201).json({
+      message: 'Emergency campaign created successfully and notifications sent',
+      campaign: newCampaign,
+    });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to create emergency campaign', error: err.message });
+    console.error('Error in createCampaign:', err);
+    return res.status(500).json({ message: 'Failed to create emergency campaign', error: err.message });
   }
 };
 

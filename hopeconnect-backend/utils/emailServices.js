@@ -1,20 +1,35 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+dotenv.config();
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // or use your SMTP server
-    auth: {
-        user: 'your_email@gmail.com',
-        pass: 'your_app_password' // Use app password if using Gmail
-    }
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // false for TLS
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD
+  }
 });
 
-export async function sendEmailToDonors(recipients, subject, htmlContent) {
-    const mailOptions = {
-        from: 'your_email@gmail.com',
-        to: recipients, // array or comma-separated string
-        subject,
-        html: htmlContent
-    };
-
-    return transporter.sendMail(mailOptions);
+/**
+ * Send email via Nodemailer
+ * @param {string} to - recipient email
+ * @param {string} subject - email subject
+ * @param {string} htmlContent - html body
+ * @param {string} textFallback - plain text body (optional)
+ */
+export async function sendEmail(to, subject, htmlContent, textFallback = '') {
+  try {
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_USER, // must match authenticated user or allowed sender
+      to,
+      subject,
+      html: htmlContent,
+      text: textFallback || 'This email requires HTML support.'
+    });
+    console.log(`✅ Email sent to ${to}: ${info.messageId}`);
+  } catch (error) {
+    console.error('❌ Email error:', error.message);
+  }
 }
