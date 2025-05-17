@@ -1,17 +1,20 @@
 const express = require('express');
 const app = express();
-const userRoutes = require('./routes/userRoutes');
-const orphanRoutes = require('./routes/orphanRoutes');
 require('dotenv').config();
-const db = require('./config/db');
+
+const userRoutes = require('./routes/userRoutes');
+const orphanageRoutes = require('./routes/orphanageRoutes');
+const orphanRoutes = require('./routes/orphan');
+const bodyParser = require('body-parser');
+const sponsorshipRoutes = require('./routes/sponsorshipRoutes');
 
 app.use(express.json());
-
-// Routes
 app.use('/api/users', userRoutes);
+app.use('/api/orphanages', orphanageRoutes);
 app.use('/api/orphans', orphanRoutes);
+app.use('/api/sponsorships', sponsorshipRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
