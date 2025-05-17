@@ -102,32 +102,21 @@ class OrphanUpdate {
     }
   }
 
-  static async getAllUpdates(page = 1, limit = 10) {
-    try {
-      const offset = (page - 1) * limit;
-      const [updates] = await db.execute(
-        `SELECT ou.*, u.name as created_by_name, o.name as orphan_name
-         FROM orphan_updates ou
-         JOIN users u ON ou.created_by = u.user_id
-         JOIN orphans o ON ou.orphan_id = o.orphan_id
-         ORDER BY ou.created_at DESC 
-         LIMIT ? OFFSET ?`,
-        [limit, offset]
-      );
-      
-      const [[{ count }]] = await db.execute('SELECT COUNT(*) as count FROM orphan_updates');
-      
-      return {
-        updates,
-        total: count,
-        page,
-        totalPages: Math.ceil(count / limit)
-      };
-    } catch (error) {
-      console.error('Error in getAllUpdates:', error);
-      throw error;
-    }
+static async getAllUpdates() {
+  try {
+    const [updates] = await db.execute(
+      `SELECT ou.*, u.name as created_by_name, o.name as orphan_name
+       FROM orphan_updates ou
+       JOIN users u ON ou.created_by = u.user_id
+       JOIN orphans o ON ou.orphan_id = o.orphan_id
+       ORDER BY ou.created_at DESC`
+    );
+    return updates;
+  } catch (error) {
+    console.error('Error in getAllUpdates:', error);
+    throw error;
   }
+}
 }
 
 module.exports = OrphanUpdate;

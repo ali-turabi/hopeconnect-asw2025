@@ -66,3 +66,25 @@ exports.getUpdatesByOrphanId = async (req, res) => {
     });
   }
 };
+exports.getAllUpdates = async (req, res) => {
+  try {
+    console.log('Fetching all updates without pagination...');
+    const updates = await OrphanUpdate.getAllUpdates();
+    
+    return res.status(200).json({
+      success: true,
+      message: updates.length ? 'All updates retrieved successfully' : 'No updates found',
+      data: updates
+    });
+  } catch (error) {
+    console.error('Detailed error fetching all updates:', {
+      message: error.message,
+      stack: error.stack,
+    });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching updates',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
