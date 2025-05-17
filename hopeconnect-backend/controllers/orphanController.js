@@ -362,3 +362,92 @@ exports.getNonSponsoredOrphans = async (req, res) => {
         });
     }
 };
+exports.getUpdateById = async (req, res) => {
+  const { updateId } = req.params;
+  
+  // Validate ID
+  if (!updateId || isNaN(updateId)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please provide a valid numeric update ID'
+    });
+  }
+
+  try {
+    console.log(`Attempting to fetch update ID: ${updateId}`);
+    const update = await OrphanUpdate.findById(Number(updateId));
+    
+    if (!update) {
+      return res.status(404).json({
+        success: false,
+        message: `Update with ID ${updateId} not found in database`
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: update
+    });
+    
+  } catch (error) {
+    console.error('Full error stack:', error.stack);
+    
+    // Specific error messages for common cases
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      return res.status(500).json({
+        success: false,
+        message: 'Database table missing - please check your migrations'
+      });
+    }
+    
+    if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+      return res.status(500).json({
+        success: false,
+        message: 'Database access denied - check credentials'
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Database operation failed',
+      errorDetails: process.env.NODE_ENV === 'development' ? {
+        message: error.message,
+        code: error.code,
+        sqlMessage: error.sqlMessage
+      } : undefined
+    });
+  }
+};
+exports.getUpdateById = async (req, res) => {
+  try {
+    const { updateId } = req.params;
+    
+    if (!updateId || isNaN(updateId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid update ID is required'
+      });
+    }
+
+    const update = await OrphanUpdate.findById(parseInt(updateId));
+    
+    if (!update) {
+      return res.status(404).json({
+        success: false,
+        message: 'Update not found'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Update retrieved successfully',
+      data: update
+    });
+  } catch (error) {
+    console.error('Error fetching orphan update:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching orphan update'
+    });
+  }
+};

@@ -117,6 +117,35 @@ static async getAllUpdates() {
     throw error;
   }
 }
+
+static async findById(updateId) {
+  let connection;
+  try {
+    connection = await db.getConnection();
+    console.log(`Executing query for update ID: ${updateId}`);
+    
+    const [rows] = await connection.execute(
+      `SELECT ou.*, 
+       IFNULL(u.name, 'Deleted User') as created_by_name,
+       IFNULL(o.name, 'Unknown Orphan') as orphan_name
+       FROM orphan_updates ou
+       LEFT JOIN users u ON ou.created_by = u.user_id
+       LEFT JOIN orphans o ON ou.orphan_id = o.orphan_id
+       WHERE ou.id = ?  /* Changed from update_id to id */
+       LIMIT 1`,
+      [updateId]
+    );
+    
+    console.log('Query results:', rows);
+    return rows[0] || null;
+  } catch (error) {
+    console.error('Database error details:', error);
+    throw error;
+  } finally {
+    if (connection) connection.release();
+  }
+}
+
 }
 
 module.exports = OrphanUpdate;

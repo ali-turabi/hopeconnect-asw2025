@@ -88,3 +88,46 @@ exports.getAllUpdates = async (req, res) => {
     });
   }
 };
+// At the end of orphanUpdateController.js, ensure all exports are listed
+exports.getUpdateById = async (req, res) => {
+  try {
+    const { updateId } = req.params;
+    
+    if (!updateId || isNaN(updateId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid update ID is required'
+      });
+    }
+
+    console.log(`Fetching update with ID: ${updateId}`); // Debug log
+    
+    const update = await OrphanUpdate.findById(parseInt(updateId));
+    
+    console.log('Update found:', update); // Debug log
+    
+    if (!update) {
+      return res.status(404).json({
+        success: false,
+        message: 'Update not found'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      message: 'Update retrieved successfully',
+      data: update
+    });
+  } catch (error) {
+    console.error('Detailed error fetching orphan update:', {
+      message: error.message,
+      stack: error.stack,
+      ...error
+    });
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while fetching orphan update',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
