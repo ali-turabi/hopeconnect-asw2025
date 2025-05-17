@@ -131,3 +131,41 @@ exports.getUpdateById = async (req, res) => {
     });
   }
 };
+exports.updateUpdate = async (req, res) => {
+  try {
+    const { updateId } = req.params;
+    const { title, description, photo_url } = req.body;
+
+    if (!updateId || isNaN(updateId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid update ID is required',
+      });
+    }
+
+    const updated = await OrphanUpdate.update(parseInt(updateId), {
+      title,
+      description,
+      photo_url,
+    });
+
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Update not found or no fields updated',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Update updated successfully',
+    });
+  } catch (error) {
+    console.error('Error updating orphan update:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while updating orphan update',
+    });
+  }
+};
+

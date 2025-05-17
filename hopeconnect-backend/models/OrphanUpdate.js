@@ -118,33 +118,26 @@ static async getAllUpdates() {
   }
 }
 
-static async findById(updateId) {
-  let connection;
+static async update(updateId, { title, description, photo_url }) {
   try {
-    connection = await db.getConnection();
-    console.log(`Executing query for update ID: ${updateId}`);
-    
-    const [rows] = await connection.execute(
-      `SELECT ou.*, 
-       IFNULL(u.name, 'Deleted User') as created_by_name,
-       IFNULL(o.name, 'Unknown Orphan') as orphan_name
-       FROM orphan_updates ou
-       LEFT JOIN users u ON ou.created_by = u.user_id
-       LEFT JOIN orphans o ON ou.orphan_id = o.orphan_id
-       WHERE ou.id = ?  /* Changed from update_id to id */
-       LIMIT 1`,
-      [updateId]
+    const [result] = await db.execute(
+      `UPDATE orphan_updates 
+       SET title = ?, 
+           description = ?, 
+           photo_url = ?
+       WHERE id = ?`,  // Removed updated_at
+      [title || null, description || null, photo_url || null, updateId]
     );
-    
-    console.log('Query results:', rows);
-    return rows[0] || null;
+    return result.affectedRows > 0;
   } catch (error) {
-    console.error('Database error details:', error);
+    console.error('Error in update:', error);
     throw error;
-  } finally {
-    if (connection) connection.release();
   }
 }
+
+
+
+
 
 }
 
