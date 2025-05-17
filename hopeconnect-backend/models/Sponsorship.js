@@ -69,6 +69,13 @@ class Sponsorship {
       [id]
     );
   }
+  // In models/Sponsorship.js
+static async updateOrphanSponsorshipStatus(orphan_id, isSponsored) {
+  await pool.execute(
+    'UPDATE orphans SET is_sponsored = ? WHERE orphan_id = ?',
+    [isSponsored, orphan_id]
+  );
+}
 }
 
 module.exports = Sponsorship;

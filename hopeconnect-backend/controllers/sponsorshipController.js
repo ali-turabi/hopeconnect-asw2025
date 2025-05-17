@@ -1,6 +1,7 @@
 const Sponsorship = require('../models/Sponsorship');
 
 // Create new sponsorship
+// In controllers/sponsorshipController.js
 exports.createSponsorship = async (req, res) => {
   try {
     const { user_id, orphan_id, donation_model, start_date, end_date, is_active } = req.body;
@@ -18,13 +19,16 @@ exports.createSponsorship = async (req, res) => {
       user_id,
       orphan_id,
       donation_model,
-      start_date: start_date || new Date(), // Default to current date
-      end_date: end_date || null,           // Explicitly set to null if not provided
-      is_active: is_active !== undefined ? is_active : true // Default to true
+      start_date: start_date || new Date(),
+      end_date: end_date || null,
+      is_active: is_active !== undefined ? is_active : true
     };
 
     const sponsorshipId = await Sponsorship.create(sponsorshipData);
     const newSponsorship = await Sponsorship.findById(sponsorshipId);
+
+    // Update the orphan's is_sponsored status
+    await Sponsorship.updateOrphanSponsorshipStatus(orphan_id, true);
 
     res.status(201).json({
       success: true,
@@ -40,7 +44,6 @@ exports.createSponsorship = async (req, res) => {
     });
   }
 };
-
 // Get single sponsorship
 exports.getSponsorship = async (req, res) => {
   try {
@@ -126,7 +129,21 @@ exports.updateSponsorship = async (req, res) => {
 // Delete sponsorship
 exports.deleteSponsorship = async (req, res) => {
   try {
+    // First get the sponsorship to know which orphan we're dealing with
+    const sponsorship = await Sponsorship.findById(req.params.id);
+    
     await Sponsorship.delete(req.params.id);
+    
+    // Check if there are any other active sponsorships for this orphan
+    const [otherSponsorships] = await pool.execute(
+      'SELECT id FROM sponsorships WHERE orphan_id = ? AND id != ?',
+      [sponsorship.orphan_id, req.params.id]
+    );
+    
+    // If no other sponsorships exist, set is_sponsored to false
+    if (otherSponsorships.length === 0) {
+      await Sponsorship.updateOrphanSponsorshipStatus(sponsorship.orphan_id, false);
+    }
     
     res.status(200).json({
       success: true,
