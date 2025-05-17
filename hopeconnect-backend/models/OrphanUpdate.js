@@ -134,6 +134,7 @@ static async update(updateId, { title, description, photo_url }) {
     throw error;
   }
 }
+// models/OrphanUpdate.js
 
 
 
