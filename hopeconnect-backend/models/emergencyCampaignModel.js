@@ -9,10 +9,12 @@ export async function getCampaignByTitle(title) {
     const [rows] = await db.execute('SELECT * FROM emergencyCampaign WHERE title = ?', [title]);
   return rows[0];
 }
+
 export async function getOrganizationId(id) {
     const [rows] = await db.execute('SELECT * FROM orphanages WHERE orphanage_id = ?', [id]);
     return rows[0];
 }
+
 export async function checkOrphanageExists(orphanageId) {
     const [rows] = await db.execute(
         'SELECT 1 FROM Orphanages WHERE orphanage_id = ?', 
@@ -20,6 +22,7 @@ export async function checkOrphanageExists(orphanageId) {
     );
     return rows.length > 0; 
 }
+
 export async function deleteCampaignByTitle(title) {
     const [result] = await db.execute(
         'DELETE FROM emergencyCampaign WHERE title = ?',
@@ -27,6 +30,7 @@ export async function deleteCampaignByTitle(title) {
     );
     return result;
 }
+
 export async function insertCampaign(orphanageId, title, description, type, goalAmount) {
   const [result] = await db.execute(
     `INSERT INTO emergencyCampaign (orphanageId, title, description, type, goalAmount, collectedAmount, isActive)
@@ -35,7 +39,6 @@ export async function insertCampaign(orphanageId, title, description, type, goal
   );
   return result;
 }
-
 
 export const getUsersToNotify = async () => {
   const [users] = await db.execute(
@@ -167,6 +170,7 @@ export async function assignUserToCampaign(user_name, campaign_title) {
     throw err;
   }
 }
+
 export async function donateToCampaignByName(user_name, campaign_title, type, amount, quantity, description, pickup_address, delivery_address) {
   const connection = await db.getConnection();
   try {
@@ -214,7 +218,6 @@ export async function donateToCampaignByName(user_name, campaign_title, type, am
 
     await connection.commit();
 
-    // ✅ Send Thank You Email
     const subject = `🙏 Thank you for your ${type === 'money' ? 'monetary' : 'physical'} donation to "${campaign_title}"`;
     const htmlContent = `
       <h3>Dear ${user_name},</h3>

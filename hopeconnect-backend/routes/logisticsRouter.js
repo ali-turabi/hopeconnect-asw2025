@@ -12,11 +12,12 @@ import {
 const router = Router();
 
 router.get('/donations', fetchAllDonations);
+router.get('/mappingDonations/:id', getTrackingInfo);
 router.delete('/donations/:id', removeDonationById);
 router.post('/mappingDonations', createMappingDonation);
 router.get('/mappingDonations', fetchAllMappingDonations);
 router.put('/updateMappingDonations', updateMappingDonation);
 router.delete('/mappingDonations/:id', removeMappingDonation);
-router.get('/mappingDonations/:id', getTrackingInfo);
+
 
 export default router;

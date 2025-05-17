@@ -11,6 +11,18 @@ export const fetchAllDonations = async (req, res) => {
   }
 };
 
+export const getTrackingInfo = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const trackingInfo = await getLogisticsTrackingInfo(id);
+    res.status(200).json(trackingInfo);
+  } catch (err) {
+    console.error('Tracking error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export const removeDonationById = async (req, res) => {
   const { id } = req.params;
 
@@ -85,14 +97,4 @@ export const removeMappingDonation = async (req, res) => {
   }
 };
 
-export const getTrackingInfo = async (req, res) => {
-  const { id } = req.params;
 
-  try {
-    const trackingInfo = await getLogisticsTrackingInfo(id);
-    res.status(200).json(trackingInfo);
-  } catch (err) {
-    console.error('Tracking error:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-};
