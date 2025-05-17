@@ -124,7 +124,6 @@ export const updateLogisticsStatus = async ({ id, status, current_location, sign
   if (result.affectedRows === 0) {
     throw new Error('Logistics request not found');
   }
-
   return result;
 };
 

@@ -3,6 +3,8 @@ import emergencyCampaignsRouter from './hopeconnect-backend/routes/emergencyCamp
 import logisticsRouter from './hopeconnect-backend/routes/logisticsRouter.js';
 import partnerRouter from './hopeconnect-backend/routes/partnershipsRouter.js';
 import fs from 'fs';
+import errorHandler from './hopeconnect-backend/middleware/errorHandler.js';
+
 
 const app = express();
 import dotenv from 'dotenv';
@@ -12,8 +14,10 @@ app.use(express.json());
 app.use('/', emergencyCampaignsRouter);
 app.use('/', logisticsRouter);
 app.use('/', partnerRouter);
-app.listen(3000, () => {
-    console.log(`Server is running on port 3000`);
-});
+app.use(errorHandler);
 
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 console.log('.env exists:', fs.existsSync('./.env'));
