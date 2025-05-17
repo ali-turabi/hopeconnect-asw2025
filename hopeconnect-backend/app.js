@@ -9,6 +9,7 @@ const bodyParser = require('body-parser');
 const orphanUpdateRoutes = require('./routes/orphanUpdateRoutes');
 const sponsorshipRoutes = require('./routes/sponsorshipRoutes');
 const donationRoutes = require('./routes/donationRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 
 
@@ -19,7 +20,7 @@ app.use('/api/orphans', orphanRoutes);
 app.use('/api/sponsorships', sponsorshipRoutes);
 app.use('/api/orphan-updates', orphanUpdateRoutes);
 app.use('/api/donations', donationRoutes);
-
+app.use('/api/reports', reportRoutes);
 
 
 
