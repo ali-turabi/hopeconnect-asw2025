@@ -37,3 +37,97 @@ exports.createReport = async (req, res) => {
     });
   }
 };
+
+exports.getAllReports = async (req, res) => {
+  try {
+    const reports = await Report.getAll();
+    res.json({
+      success: true,
+      count: reports.length,
+      reports
+    });
+  } catch (error) {
+    console.error('Error getting reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch reports'
+    });
+  }
+};
+
+exports.getReportsByReceiver = async (req, res) => {
+  try {
+    const receiverId = req.params.receiverId;
+    const reports = await Report.getByReceiver(receiverId);
+    res.json({
+      success: true,
+      receiver_id: receiverId,
+      count: reports.length,
+      reports
+    });
+  } catch (error) {
+    console.error('Error getting receiver reports:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch receiver reports'
+    });
+  }
+};
+
+exports.updateReport = async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    const { content, image_url } = req.body;
+
+    if (!content) {
+      return res.status(400).json({
+        success: false,
+        message: 'Content is required'
+      });
+    }
+
+    const updated = await Report.update(reportId, { content, image_url });
+    if (!updated) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+
+    const updatedReport = await Report.getById(reportId);
+    res.json({
+      success: true,
+      message: 'Report updated successfully',
+      report: updatedReport
+    });
+  } catch (error) {
+    console.error('Error updating report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update report'
+    });
+  }
+};
+
+exports.deleteReport = async (req, res) => {
+  try {
+    const reportId = req.params.id;
+    const deleted = await Report.delete(reportId);
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+    res.json({
+      success: true,
+      message: 'Report deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting report:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete report'
+    });
+  }
+};
