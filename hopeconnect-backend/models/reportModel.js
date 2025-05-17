@@ -43,7 +43,7 @@ class Report {
       throw error;
     }
   }
- static async getAll() {
+static async getAll() {
     try {
       const [rows] = await db.execute(
         `SELECT 
@@ -61,8 +61,7 @@ class Report {
       throw error;
     }
   }
-
-  static async getByReceiver(receiverId) {
+static async getByReceiver(receiverId) {
     try {
       const [rows] = await db.execute(
         `SELECT 
@@ -80,8 +79,7 @@ class Report {
       throw error;
     }
   }
-
-  static async update(id, updateData) {
+static async update(id, updateData) {
     try {
       const { content, image_url } = updateData;
       const [result] = await db.execute(
@@ -97,7 +95,7 @@ class Report {
     }
   }
 
-  static async delete(id) {
+static async delete(id) {
     try {
       const [result] = await db.execute(
         'DELETE FROM reports WHERE id = ?',
@@ -111,6 +109,9 @@ class Report {
   }
 
 
+
+
+  
 }
 
 module.exports = Report;

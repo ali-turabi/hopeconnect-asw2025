@@ -3,7 +3,9 @@ const Report = require('../models/reportModel');
 exports.createReport = async (req, res) => {
   try {
     const { receiver_user_id, content, image_url } = req.body;
-    const sender_user_id = req.user.id; // Using req.user.id from your JWT
+    const sender_user_id = req.user.user_id; // Ensure this matches your JWT payload
+
+    console.log("Request data:", { sender_user_id, receiver_user_id, content, image_url }); // Log input
 
     if (!receiver_user_id || !content) {
       return res.status(400).json({
@@ -28,16 +30,21 @@ exports.createReport = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating report:', error);
+    console.error('Error creating report:', {
+      message: error.message,
+      stack: error.stack,
+      sql: error.sql // If it's a database error
+    });
+
     res.status(500).json({
       success: false,
       message: error.message.includes('foreign key') 
         ? 'Invalid user ID provided' 
-        : 'Failed to create report'
+        : 'Failed to create report',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
-
 exports.getAllReports = async (req, res) => {
   try {
     const reports = await Report.getAll();
@@ -54,7 +61,6 @@ exports.getAllReports = async (req, res) => {
     });
   }
 };
-
 exports.getReportsByReceiver = async (req, res) => {
   try {
     const receiverId = req.params.receiverId;
@@ -73,7 +79,6 @@ exports.getReportsByReceiver = async (req, res) => {
     });
   }
 };
-
 exports.updateReport = async (req, res) => {
   try {
     const reportId = req.params.id;
@@ -108,7 +113,6 @@ exports.updateReport = async (req, res) => {
     });
   }
 };
-
 exports.deleteReport = async (req, res) => {
   try {
     const reportId = req.params.id;
@@ -129,5 +133,4 @@ exports.deleteReport = async (req, res) => {
       success: false,
       message: 'Failed to delete report'
     });
-  }
-};
+  }};
