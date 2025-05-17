@@ -31,5 +31,30 @@ const authorizeAdmin = (req, res, next) => {
     }
     next();
 };
+const authorizeSponsor = (req, res, next) => {
+  // Check multiple possible role properties
+  const userRole = req.user.role || req.user.user_type || req.user.userRole;
+  
+  if (!userRole) {
+    console.error('User object missing role:', req.user);
+    return res.status(403).json({
+      success: false,
+      message: 'Role information missing in token',
+      yourUserObject: req.user  // For debugging
+    });
+  }
+  
+  if (userRole.toLowerCase() !== 'sponsor') {
+    return res.status(403).json({
+      success: false,
+      message: `Sponsor access required. Your role: ${userRole}`
+    });
+  }
+  next();
+};
 
-module.exports = { authenticate, authorizeAdmin };
+module.exports = { 
+  authenticate, 
+  authorizeAdmin,  // Now properly exported
+  authorizeSponsor 
+};
