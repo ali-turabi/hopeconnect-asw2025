@@ -1,12 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const donationController = require('../controllers/donationController');
 
-const { authenticate, authorizeDonor } = require('../middleware/auth');
+const { createDonation, getDonationCategories, updatePaymentStatus } = require('../controllers/donationController');
+const { authorizeDonor } = require('../middleware/auth');
+const verifyAdminStaff = require('../middleware/verifyAdminStaff'); // ✅ CORRECT
 
-// ✅ Protected endpoint: Only donor can access
-router.post('/', authenticate, authorizeDonor, donationController.createDonation);
+console.log('updatePaymentStatus:', updatePaymentStatus); // Debug line
+console.log('verifyAdminStaff:', verifyAdminStaff);
 
-router.get('/categories', donationController.getDonationCategories);
+router.post('/', authorizeDonor, createDonation);
+router.get('/categories', getDonationCategories);
+router.patch('/:id/payment-status', verifyAdminStaff, updatePaymentStatus);
 
 module.exports = router;
