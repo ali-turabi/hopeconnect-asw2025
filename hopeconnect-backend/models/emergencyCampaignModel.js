@@ -15,6 +15,11 @@ export async function getOrganizationId(id) {
     return rows[0];
 }
 
+export async function getEmergencyCampaignById(id) {
+  const [rows] = await db.execute('SELECT * FROM emergencyCampaign WHERE id = ?', [id]);
+  return rows[0];
+}
+
 export async function checkOrphanageExists(orphanageId) {
     const [rows] = await db.execute(
         'SELECT 1 FROM Orphanages WHERE orphanage_id = ?', 
@@ -251,4 +256,61 @@ export async function getUsersWithEmergencyCampaigns() {
   `);
 
   return rows;
+}
+
+export async function getActiveCampaigns() {
+  const [rows] = await db.query('SELECT * FROM emergencyCampaign WHERE isActive = 1');
+  return rows;
+}
+
+export async function updateEmergencyCampaign(campaignId, updatedData) {
+  try {
+    const existing = await getEmergencyCampaignById(campaignId);
+    if (!existing) {
+      const error = new Error(`Campaign with ID ${campaignId} not found.`);
+      error.status = 404;
+      throw error;
+    }
+
+    const allowedFields = [
+      'orphanageId', 'title', 'description', 'type',
+      'goalAmount', 'collectedAmount', 'isActive'
+    ];
+
+    const fields = [];
+    const values = [];
+
+    for (const key of allowedFields) {
+      if (Object.prototype.hasOwnProperty.call(updatedData, key)) {
+        fields.push(`${key} = ?`);
+        values.push(updatedData[key]);
+      }
+    }
+
+    if (fields.length === 0) {
+      const error = new Error('No valid fields provided for update.');
+      error.status = 400;
+      throw error;
+    }
+
+    fields.push(`updatedAt = CURRENT_TIMESTAMP`);
+
+    const sql = `
+      UPDATE emergencyCampaign
+      SET ${fields.join(', ')}
+      WHERE id = ?
+    `;
+
+    values.push(campaignId);
+
+    await db.execute(sql, values);
+
+    const updatedCampaign = await getEmergencyCampaignById(campaignId);
+
+    return updatedCampaign;
+  } catch (err) {
+    console.error('Model Error - updateEmergencyCampaign:', err.message);
+    if (!err.status) err.status = 500;
+    throw err;
+  }
 }

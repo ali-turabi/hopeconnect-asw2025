@@ -1,4 +1,6 @@
-import { getAllCampaigns,getCampaignByTitle,insertCampaign,checkOrphanageExists,assignUserToCampaign,deleteCampaignByTitle,donateToCampaignByName,getUsersWithEmergencyCampaigns,getUsersToNotify} from '../models/emergencyCampaignModel.js';
+import { getAllCampaigns,getCampaignByTitle,insertCampaign,checkOrphanageExists,assignUserToCampaign,deleteCampaignByTitle,donateToCampaignByName,getUsersWithEmergencyCampaigns,getUsersToNotify,getActiveCampaigns,
+  updateEmergencyCampaign
+} from '../models/emergencyCampaignModel.js';
 
 import { sendEmail } from '../utils/emailServices.js';
 export const fetchAllCampaigns = async (req, res) => {
@@ -170,3 +172,28 @@ export const listUsersWithCampaigns = async (req, res) => {
     res.status(500).json({ message: 'Failed to get users with emergency campaigns' });
   }
 };
+
+export const fetchActiveCampaigns = async (req, res) => {
+  try {
+    const activeCampaigns = await getActiveCampaigns();
+    res.json(activeCampaigns);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch active campaigns', error: err.message });
+  }
+};
+
+export async function updateCampaign(req, res) {
+  try {
+    const campaignId = req.params.id;
+    const updateData = req.body;
+
+    const updatedCampaign = await updateEmergencyCampaign(campaignId, updateData);
+
+    res.status(200).json({
+      message: 'Campaign updated successfully',
+      campaign: updatedCampaign,
+    });
+  } catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
+  }
+}
