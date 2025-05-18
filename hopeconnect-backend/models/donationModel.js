@@ -236,7 +236,26 @@ static async getTotalDonationsByOrphanage(orphanageId) {
   }
 }
 
-
+static async getPendingDonationsForOrphanage(orphanageId) {
+  try {
+    const [rows] = await db.execute(
+      `SELECT 
+         d.*, 
+         dc.name as category_name,
+         u.name as donor_name  /* Changed from u.username to u.name */
+       FROM donations d
+       JOIN donation_categories dc ON d.category_id = dc.id
+       JOIN users u ON d.user_id = u.user_id
+       WHERE d.orphanage_id = ? 
+       AND d.payment_status != 'paid'`,
+      [orphanageId]
+    );
+    return rows;
+  } catch (error) {
+    console.error('Database error in Donation.getPendingDonationsForOrphanage:', error);
+    throw error;
+  }
+}
 
 
 

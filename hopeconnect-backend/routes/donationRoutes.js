@@ -1,26 +1,37 @@
 const express = require('express');
 const router = express.Router();
 const donationController = require('../controllers/donationController');
-
 const { authenticate, authorizeDonor } = require('../middleware/auth');
+const verifyAdminStaff = require('../middleware/verifyAdminStaff');
 
 // ✅ Protected endpoint: Only donor can access
 router.post('/', authenticate, authorizeDonor, donationController.createDonation);
 router.get('/categories', donationController.getDonationCategories);
 
-// New endpoint for updating payment status - donor only
+// Updated endpoint for updating payment status - admin staff only
 router.patch(
   '/:id/payment-status',
   authenticate,
-  authorizeDonor,
+  verifyAdminStaff,
   donationController.updatePaymentStatus
 );
-router.get('/categories', donationController.getDonationCategories);
+
 router.delete('/:id', donationController.deleteDonation);
-router.get('/summary',  donationController.getDonationSummary);
+
+// Updated summary endpoint - admin only
+router.get('/summary', authenticate, verifyAdminStaff, donationController.getDonationSummary);
+
 router.get(
   '/orphanages/:id/summary',
-   // Or appropriate middleware
   donationController.getOrphanageDonationsSummary
 );
+
+// New endpoint for admin staff to get non-paid donations for their orphanage
+router.get(
+  '/orphanage/pending',
+  authenticate,
+  verifyAdminStaff,
+  donationController.getPendingDonationsForOrphanage
+);
+
 module.exports = router;

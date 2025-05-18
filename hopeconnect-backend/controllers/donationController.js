@@ -193,3 +193,33 @@ exports.getOrphanageDonationsSummary = async (req, res) => {
     return res.status(statusCode).json(response);
   }
 };
+exports.getPendingDonationsForOrphanage = async (req, res) => {
+  try {
+    // Get orphanage_id from the admin staff's token (set by verifyAdminStaff middleware)
+    const orphanageId = req.user.orphanage_id;
+    
+    if (!orphanageId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Admin staff must be associated with an orphanage'
+      });
+    }
+
+    const pendingDonations = await Donation.getPendingDonationsForOrphanage(orphanageId);
+    
+    res.json({
+      success: true,
+      orphanage_id: orphanageId,
+      count: pendingDonations.length,
+      donations: pendingDonations
+    });
+
+  } catch (error) {
+    console.error('Error fetching pending donations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching pending donations',
+      error: error.message
+    });
+  }
+};
