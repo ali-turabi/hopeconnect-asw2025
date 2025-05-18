@@ -52,7 +52,16 @@ const authorizeSponsor = (req, res, next) => {
   }
   next();
 };
-
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.user_type)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Access denied. You are not authorized to perform this action.'
+      });
+    }
+    next();
+  };};
 // ✅ NEW: Donor authorization
 const authorizeDonor = (req, res, next) => {
   const userRole = req.user.role || req.user.user_type || req.user.userRole;
@@ -80,5 +89,7 @@ module.exports = {
   authenticate, 
   authorizeAdmin, 
   authorizeSponsor,
-  authorizeDonor  // ✅ Export it
+  authorizeDonor,  // ✅ Export it
+    authorize
+
 };

@@ -10,6 +10,13 @@ const orphanUpdateRoutes = require('./routes/orphanUpdateRoutes');
 const sponsorshipRoutes = require('./routes/sponsorshipRoutes');
 const donationRoutes = require('./routes/donationRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const volunteerRoutes = require('./routes/volunteerRoutes');
+const requestRoutes = require('./routes/requestRoutes')
+const assignmentRoutes = require('./routes/assignmentRoutes');
+const expenditureRoutes = require('./routes/expenditureRoutes');
+const impactReportRoutes = require('./routes/impactReportRoutes');
+const verificationRoutes = require('./routes/verificationRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 
 
@@ -21,7 +28,14 @@ app.use('/api/sponsorships', sponsorshipRoutes);
 app.use('/api/orphan-updates', orphanUpdateRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/reports', reportRoutes);
-
+//mmmmmmmmmmmmmmmmmmmmmmmmmmm
+app.use('/api/volunteers', volunteerRoutes);
+app.use('/api/requests', requestRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/expenditures', expenditureRoutes);
+app.use('/api/reports', impactReportRoutes);
+app.use('/api/verifications', verificationRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 
 const PORT = process.env.PORT || 3000;
