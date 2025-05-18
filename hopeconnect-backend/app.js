@@ -9,6 +9,8 @@ const bodyParser = require('body-parser');
 const orphanUpdateRoutes = require('./routes/orphanUpdateRoutes');
 const sponsorshipRoutes = require('./routes/sponsorshipRoutes');
 const donationRoutes = require('./routes/donationRoutes');
+const reportRoutes = require('./routes/reportRoutes');
+
 const reviewPlatformRoutes = require('./routes/reviewPlatformRoutes'); // Updated filename
 const budgetRoutes = require('./routes/budgetRoutes');
 
@@ -21,9 +23,9 @@ app.use('/api/orphans', orphanRoutes);
 app.use('/api/sponsorships', sponsorshipRoutes);
 app.use('/api/orphan-updates', orphanUpdateRoutes);
 app.use('/api/donations', donationRoutes);
+app.use('/api/reports', reportRoutes);
 app.use('/api', reviewPlatformRoutes);
 app.use('/api', budgetRoutes);
-
 
 
 const PORT = process.env.PORT || 3000;
