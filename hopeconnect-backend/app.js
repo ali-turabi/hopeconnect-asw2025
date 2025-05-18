@@ -17,6 +17,8 @@ const expenditureRoutes = require('./routes/expenditureRoutes');
 const impactReportRoutes = require('./routes/impactReportRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const reviewPlatformRoutes = require('./routes/reviewPlatformRoutes'); // Updated filename
+const budgetRoutes = require('./routes/budgetRoutes');
 
 
 
@@ -28,6 +30,9 @@ app.use('/api/sponsorships', sponsorshipRoutes);
 app.use('/api/orphan-updates', orphanUpdateRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api', reviewPlatformRoutes);
+app.use('/api', budgetRoutes);
+
 //mmmmmmmmmmmmmmmmmmmmmmmmmmm
 app.use('/api/volunteers', volunteerRoutes);
 app.use('/api/requests', requestRoutes);
