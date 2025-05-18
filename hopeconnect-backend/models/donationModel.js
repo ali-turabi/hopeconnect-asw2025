@@ -1,64 +1,31 @@
 const db = require('../config/db');
 
 class Donation {
- static async create(donationData) {
-    const connection = await db.getConnection();
-    try {
-      await connection.beginTransaction();
+static async create(donationData) {
+  try {
+    const { user_id, orphanage_id, donation_type, category_id, amount, description, payment_status } = donationData;
 
-      const { user_id, orphanage_id, donation_type, category_id, amount, description, payment_status } = donationData;
+    const [result] = await db.execute(
+      `INSERT INTO donations 
+       (user_id, orphanage_id, donation_type, category_id, amount, description, payment_status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [
+        user_id || null,
+        orphanage_id || null,
+        donation_type,
+        category_id,
+        amount || null,
+        description || null,
+        payment_status || 'pending' // Default to pending
+      ]
+    );
 
-      // Calculate platform fee (0.3%) and orphanage amount (99.7%)
-      const platformFee = donation_type === 'money' ? amount * 0.03 : 0;
-      const orphanageAmount = donation_type === 'money' ? amount - platformFee : null;
-
-      // 1. Create the donation record
-      const [result] = await connection.execute(
-        `INSERT INTO donations 
-         (user_id, orphanage_id, donation_type, category_id, amount, description, payment_status) 
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [
-          user_id || null,
-          orphanage_id || null,
-          donation_type,
-          category_id,
-          amount || null,
-          description || null,
-          payment_status || 'pending'
-        ]
-      );
-
-      // 2. Update orphanage budget (only for monetary donations)
-      if (donation_type === 'money' && orphanage_id) {
-        await connection.execute(
-          `UPDATE orphanages 
-           SET current_budget = current_budget + ? 
-           WHERE orphanage_id = ?`,
-          [orphanageAmount, orphanage_id]
-        );
-      }
-
-      // 3. Update platform budget (only for monetary donations)
-      if (donation_type === 'money' && platformFee > 0) {
-        await connection.execute(
-          `UPDATE platform_settings 
-           SET budget = budget + ? 
-           WHERE id = 1`,
-          [platformFee]
-        );
-      }
-
-      await connection.commit();
-      return result.insertId;
-
-    } catch (error) {
-      await connection.rollback();
-      console.error('Database error in Donation.create:', error);
-      throw error;
-    } finally {
-      connection.release();
-    }
+    return result.insertId;
+  } catch (error) {
+    console.error('Database error in Donation.create:', error);
+    throw error;
   }
+}
   static async getById(id) {
     try {
       const [rows] = await db.execute(
@@ -87,11 +54,15 @@ class Donation {
       throw error;
     }
   }
-static async updatePaymentStatus(id, payment_status) {
+
+static async updatePaymentStatus(id, newStatus) {
+  const connection = await db.getConnection();
   try {
-    // First verify the donation exists
-    const [donation] = await db.execute(
-      'SELECT id FROM donations WHERE id = ?',
+    await connection.beginTransaction();
+
+    // 1. Get current donation details
+    const [donation] = await connection.execute(
+      `SELECT * FROM donations WHERE id = ? FOR UPDATE`,
       [id]
     );
     
@@ -99,19 +70,77 @@ static async updatePaymentStatus(id, payment_status) {
       throw new Error('Donation not found');
     }
 
-    const [result] = await db.execute(
+    const currentStatus = donation[0].payment_status;
+    const amount = donation[0].amount;
+    const orphanageId = donation[0].orphanage_id;
+    const donationType = donation[0].donation_type;
+
+    // 2. Update the status
+    const [result] = await connection.execute(
       'UPDATE donations SET payment_status = ? WHERE id = ?',
-      [payment_status, id]
+      [newStatus, id]
     );
 
     if (result.affectedRows === 0) {
       throw new Error('Failed to update payment status');
     }
 
+    // 3. Process budget changes only for monetary donations
+    if (donationType === 'money') {
+      const platformFee = amount * 0.03; // 0.3% platform fee
+      const orphanageAmount = amount - platformFee;
+
+      // Case 1: Changing to 'paid' status
+      if (newStatus === 'paid' && currentStatus !== 'paid') {
+        // Add to orphanage budget
+        if (orphanageId) {
+          await connection.execute(
+            `UPDATE orphanages 
+             SET current_budget = current_budget + ? 
+             WHERE orphanage_id = ?`,
+            [orphanageAmount, orphanageId]
+          );
+        }
+        
+        // Add to platform budget
+        await connection.execute(
+          `UPDATE platform_settings 
+           SET budget = budget + ? 
+           WHERE id = 1`,
+          [platformFee]
+        );
+      }
+      // Case 2: Changing from 'paid' to another status
+      else if (currentStatus === 'paid' && newStatus !== 'paid') {
+        // Subtract from orphanage budget
+        if (orphanageId) {
+          await connection.execute(
+            `UPDATE orphanages 
+             SET current_budget = current_budget - ? 
+             WHERE orphanage_id = ?`,
+            [orphanageAmount, orphanageId]
+          );
+        }
+        
+        // Subtract from platform budget
+        await connection.execute(
+          `UPDATE platform_settings 
+           SET budget = budget - ? 
+           WHERE id = 1`,
+          [platformFee]
+        );
+      }
+    }
+
+    await connection.commit();
     return this.getById(id);
+
   } catch (error) {
+    await connection.rollback();
     console.error('Database error in Donation.updatePaymentStatus:', error);
     throw error;
+  } finally {
+    connection.release();
   }
 }
 static async getCategories() {
