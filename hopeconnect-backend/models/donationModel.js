@@ -1,11 +1,19 @@
 const db = require('../config/db');
 
 class Donation {
-  static async create(donationData) {
+ static async create(donationData) {
+    const connection = await db.getConnection();
     try {
+      await connection.beginTransaction();
+
       const { user_id, orphanage_id, donation_type, category_id, amount, description, payment_status } = donationData;
 
-      const [result] = await db.execute(
+      // Calculate platform fee (0.3%) and orphanage amount (99.7%)
+      const platformFee = donation_type === 'money' ? amount * 0.03 : 0;
+      const orphanageAmount = donation_type === 'money' ? amount - platformFee : null;
+
+      // 1. Create the donation record
+      const [result] = await connection.execute(
         `INSERT INTO donations 
          (user_id, orphanage_id, donation_type, category_id, amount, description, payment_status) 
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -20,13 +28,37 @@ class Donation {
         ]
       );
 
+      // 2. Update orphanage budget (only for monetary donations)
+      if (donation_type === 'money' && orphanage_id) {
+        await connection.execute(
+          `UPDATE orphanages 
+           SET current_budget = current_budget + ? 
+           WHERE orphanage_id = ?`,
+          [orphanageAmount, orphanage_id]
+        );
+      }
+
+      // 3. Update platform budget (only for monetary donations)
+      if (donation_type === 'money' && platformFee > 0) {
+        await connection.execute(
+          `UPDATE platform_settings 
+           SET budget = budget + ? 
+           WHERE id = 1`,
+          [platformFee]
+        );
+      }
+
+      await connection.commit();
       return result.insertId;
+
     } catch (error) {
+      await connection.rollback();
       console.error('Database error in Donation.create:', error);
       throw error;
+    } finally {
+      connection.release();
     }
   }
-
   static async getById(id) {
     try {
       const [rows] = await db.execute(
