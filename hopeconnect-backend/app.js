@@ -21,7 +21,6 @@ app.use('/api/orphans', orphanRoutes);
 app.use('/api/sponsorships', sponsorshipRoutes);
 app.use('/api/orphan-updates', orphanUpdateRoutes);
 app.use('/api/donations', donationRoutes);
-app.use('/api/reports', reportRoutes);
 app.use('/api', reviewPlatformRoutes);
 app.use('/api', budgetRoutes);
 
