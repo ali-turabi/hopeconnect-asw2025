@@ -1,4 +1,5 @@
 import { getAllPartners,getPartnerByName,insertPartner,updatePartnerByName,deletePartnerByName,getPartnersByStatus} from '../models/partnershipsModel.js';
+
 export const fetchAllPartners = async (req, res) => {
   try {
     const partners = await getAllPartners();

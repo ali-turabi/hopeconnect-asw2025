@@ -2,7 +2,10 @@ import { getAllCampaigns,getCampaignByTitle,insertCampaign,checkOrphanageExists,
   updateEmergencyCampaign
 } from '../models/emergencyCampaignModel.js';
 
+
 import { sendEmail } from '../utils/emailServices.js';
+
+
 export const fetchAllCampaigns = async (req, res) => {
   try {
     const campaigns = await getAllCampaigns();
@@ -104,10 +107,10 @@ export const createCampaign = async (req, res) => {
 };
 
 export const joinCampaign = async (req, res) => {
-  const { user_name, campaign_title } = req.body;
+  const { user_name, emergency_title } = req.body;
   try {
-    const result = await assignUserToCampaign(user_name, campaign_title);
-    res.status(200).json({ message: 'User successfully assigned to the emergency campaign', result });
+    await assignUserToCampaign(user_name, emergency_title);
+    res.status(200).json({ message: 'User successfully assigned to the emergency campaign' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

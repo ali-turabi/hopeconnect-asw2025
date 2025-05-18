@@ -119,7 +119,7 @@ export const createCampaign = async (req, res) => {
   }
 };
 
-export async function assignUserToCampaign(user_name, campaign_title) {
+export async function assignUserToCampaign(user_name, emergency_title) {
   try {
     const [userResult] = await db.execute(
       'SELECT user_id, user_type, email FROM users WHERE name = ?',
@@ -140,7 +140,7 @@ export async function assignUserToCampaign(user_name, campaign_title) {
 
     const [campaignResult] = await db.execute(
       'SELECT id, title, description FROM emergencyCampaign WHERE title = ?',
-      [campaign_title]
+      [emergency_title]
     );
 
     if (campaignResult.length === 0) {
@@ -156,7 +156,6 @@ export async function assignUserToCampaign(user_name, campaign_title) {
 
     const [insertResult] = await db.execute(insertQuery, [user_id, campaign.id]);
 
-    // ✅ Send thank-you email after joining
     const subject = `Thank you for joining the "${campaign.title}" campaign`;
     const htmlContent = `
       <h3>Hi ${user_name},</h3>
@@ -199,20 +198,19 @@ export async function donateToCampaignByName(user_name, campaign_title, type, am
     }
     const campaign_id = campaignRows[0].id;
 
-    await connection.execute(
-      `INSERT INTO donations 
-          (user_id, category, type, status, amount, quantity, description, pickup_address, delivery_address)
-       VALUES (?, 'emergency', ?, 'pending', ?, ?, ?, ?, ?)`,
-      [
-        user.user_id,
-        type,
-        amount || null,
-        quantity || null,
-        description,
-        pickup_address,
-        delivery_address
-      ]
-    );
+  await connection.execute(
+  `INSERT INTO donations 
+    (category, type, status, amount, quantity, description, pickup_address, delivery_address)
+   VALUES ('emergency', ?, 'pending', ?, ?, ?, ?, ?)`,
+  [
+    type,
+    amount || null,
+    quantity || null,
+    description,
+    pickup_address,
+    delivery_address
+  ]
+);
 
     if (type === 'money' && amount > 0) {
       await connection.execute(
