@@ -1,6 +1,10 @@
 const express = require('express');
 const app = express();
 require('dotenv').config();
+const partnerRoutes = require('./routes/partnerRoutes');
+
+
+const logisticsRoutes = require('./routes/logisticsRoutes'); // ✅ newly added
 
 const userRoutes = require('./routes/userRoutes');
 const orphanageRoutes = require('./routes/orphanageRoutes');
@@ -10,13 +14,29 @@ const orphanUpdateRoutes = require('./routes/orphanUpdateRoutes');
 const sponsorshipRoutes = require('./routes/sponsorshipRoutes');
 const donationRoutes = require('./routes/donationRoutes');
 const reportRoutes = require('./routes/reportRoutes');
-
-const reviewPlatformRoutes = require('./routes/reviewPlatformRoutes'); // Updated filename
+const reviewPlatformRoutes = require('./routes/reviewPlatformRoutes');
 const budgetRoutes = require('./routes/budgetRoutes');
 
 
 
+
+const emergencyCampaignRoutes = require('./routes/emergencyCampaigns');
+
+// Middleware
+app.use(bodyParser.json());
 app.use(express.json());
+
+// Routes
+app.use('/api', partnerRoutes); // Or another base like /api/partners
+app.use('/api/logistics', logisticsRoutes);
+app.use('/api', emergencyCampaignRoutes);
+
+
+ // ✅ active now
+
+
+//app.use('/api/logistic', logisticsRoutes);
+//app.use('/api/emergency-campaign', emergencyCampaignsRouter);
 app.use('/api/users', userRoutes);
 app.use('/api/orphanages', orphanageRoutes);
 app.use('/api/orphans', orphanRoutes);
@@ -24,9 +44,8 @@ app.use('/api/sponsorships', sponsorshipRoutes);
 app.use('/api/orphan-updates', orphanUpdateRoutes);
 app.use('/api/donations', donationRoutes);
 app.use('/api/reports', reportRoutes);
-app.use('/api', reviewPlatformRoutes);
-app.use('/api', budgetRoutes);
-
+app.use('/api/reviews', reviewPlatformRoutes);
+app.use('/api/budget', budgetRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
