@@ -1,11 +1,10 @@
 const Report = require('../models/reportModel');
-
+import { sendEmail } from '../utils/emailService.js'; 
+import db from '../config/db.js';
 exports.createReport = async (req, res) => {
   try {
     const { receiver_user_id, content, image_url } = req.body;
-    const sender_user_id = req.user.user_id; // Ensure this matches your JWT payload
-
-    console.log("Request data:", { sender_user_id, receiver_user_id, content, image_url }); // Log input
+    const sender_user_id = req.user.user_id;
 
     if (!receiver_user_id || !content) {
       return res.status(400).json({
@@ -23,6 +22,50 @@ exports.createReport = async (req, res) => {
 
     const newReport = await Report.getById(reportId);
 
+    // ✅ Fetch receiver's email
+    const [[receiver]] = await db.execute(
+      'SELECT email, name FROM users WHERE user_id = ?',
+      [receiver_user_id]
+    );
+
+    if (!receiver) {
+      console.warn('Receiver email not found');
+    } else {
+      // ✅ Fetch all reports for this receiver
+      const allReports = await Report.getByReceiver(receiver_user_id);
+
+      // ✅ Format reports as HTML
+      const htmlContent = `
+        <h2>📋 Reports Sent to You</h2>
+        <p>Hello ${receiver.name}, you have received a new report. Here are all your reports:</p>
+        <table border="1" cellspacing="0" cellpadding="6">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Sender</th>
+              <th>Content</th>
+              <th>Image</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${allReports.map(report => `
+              <tr>
+                <td>${report.id}</td>
+                <td>${report.sender_name}</td>
+                <td>${report.content}</td>
+                <td>${report.image_url ? `<a href="${report.image_url}">View Image</a>` : 'No image'}</td>
+                <td>${new Date(report.report_date).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // ✅ Send the email
+      await sendEmail(receiver.email, 'New Report Notification', htmlContent);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Report created successfully',
@@ -33,13 +76,13 @@ exports.createReport = async (req, res) => {
     console.error('Error creating report:', {
       message: error.message,
       stack: error.stack,
-      sql: error.sql // If it's a database error
+      sql: error.sql
     });
 
     res.status(500).json({
       success: false,
-      message: error.message.includes('foreign key') 
-        ? 'Invalid user ID provided' 
+      message: error.message.includes('foreign key')
+        ? 'Invalid user ID provided'
         : 'Failed to create report',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -79,6 +122,7 @@ exports.getReportsByReceiver = async (req, res) => {
     });
   }
 };
+
 exports.updateReport = async (req, res) => {
   try {
     const reportId = req.params.id;
@@ -100,11 +144,58 @@ exports.updateReport = async (req, res) => {
     }
 
     const updatedReport = await Report.getById(reportId);
+
+    const [[receiver]] = await db.execute(
+      'SELECT email, name FROM users WHERE user_id = ?',
+      [updatedReport.receiver_user_id]
+    );
+
+    if (receiver) {
+      const allReports = await Report.getByReceiver(updatedReport.receiver_user_id);
+
+      const htmlContent = `
+        <h2>📋 Reports Sent to You (Updated)</h2>
+        <p>Hello ${receiver.name}, a report has been <b>updated</b>. Here is the updated report and all your reports:</p>
+        <h3>📌 Updated Report:</h3>
+        <p><strong>From:</strong> ${updatedReport.sender_name}</p>
+        <p><strong>Content:</strong> ${updatedReport.content}</p>
+        <p><strong>Image:</strong> ${updatedReport.image_url ? `<a href="${updatedReport.image_url}">View Image</a>` : 'No image'}</p>
+        <p><strong>Date:</strong> ${new Date(updatedReport.report_date).toLocaleString()}</p>
+        
+        <hr/>
+        <h3>📚 All Reports:</h3>
+        <table border="1" cellspacing="0" cellpadding="6">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Sender</th>
+              <th>Content</th>
+              <th>Image</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${allReports.map(report => `
+              <tr>
+                <td>${report.id}</td>
+                <td>${report.sender_name}</td>
+                <td>${report.content}</td>
+                <td>${report.image_url ? `<a href="${report.image_url}">View</a>` : 'No image'}</td>
+                <td>${new Date(report.report_date).toLocaleString()}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      await sendEmail(receiver.email, 'Report Updated Notification', htmlContent);
+    }
+
     res.json({
       success: true,
       message: 'Report updated successfully',
       report: updatedReport
     });
+
   } catch (error) {
     console.error('Error updating report:', error);
     res.status(500).json({
