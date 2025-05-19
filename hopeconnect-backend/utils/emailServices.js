@@ -5,7 +5,7 @@ dotenv.config();
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
-  secure: false, // false for TLS
+  secure: false,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD
@@ -13,7 +13,7 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * Send email via Nodemailer
+ 
  * @param {string} to - recipient email
  * @param {string} subject - email subject
  * @param {string} htmlContent - html body
@@ -22,7 +22,7 @@ const transporter = nodemailer.createTransport({
 export async function sendEmail(to, subject, htmlContent, textFallback = '') {
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_USER, // must match authenticated user or allowed sender
+      from: process.env.EMAIL_USER,
       to,
       subject,
       html: htmlContent,
