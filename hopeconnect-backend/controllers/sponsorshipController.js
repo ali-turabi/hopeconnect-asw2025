@@ -4,19 +4,32 @@ const Sponsorship = require('../models/Sponsorship');
 // In controllers/sponsorshipController.js
 exports.createSponsorship = async (req, res) => {
   try {
-    const { user_id, orphan_id, donation_model, start_date, end_date, is_active } = req.body;
+    const { orphan_id, donation_model, start_date, end_date, is_active } = req.body;
+    const user_id = req.user.user_id; // Use authenticated user's ID
     
+    console.log('Creating sponsorship for authenticated user:', user_id);
+
     // Validate required fields
-    if (!user_id || !orphan_id || !donation_model) {
+    if (!orphan_id || !donation_model) {
       return res.status(400).json({ 
         success: false,
-        message: 'user_id, orphan_id, and donation_model are required' 
+        message: 'orphan_id and donation_model are required' 
+      });
+    }
+
+    // Check if orphanage is active
+    try {
+      await Sponsorship.validateOrphanageActive(orphan_id);
+    } catch (error) {
+      return res.status(403).json({
+        success: false,
+        message: error.message
       });
     }
 
     // Set default values
     const sponsorshipData = {
-      user_id,
+      user_id, // Now using the authenticated user's ID
       orphan_id,
       donation_model,
       start_date: start_date || new Date(),
@@ -27,20 +40,30 @@ exports.createSponsorship = async (req, res) => {
     const sponsorshipId = await Sponsorship.create(sponsorshipData);
     const newSponsorship = await Sponsorship.findById(sponsorshipId);
 
-    // Update the orphan's is_sponsored status
+    // Update the orphan's sponsorship status
     await Sponsorship.updateOrphanSponsorshipStatus(orphan_id, true);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
-      data: newSponsorship
+      data: newSponsorship,
+      message: 'Sponsorship created successfully'
     });
 
   } catch (error) {
-    console.error('Error creating sponsorship:', error);
-    res.status(500).json({ 
+    console.error('Sponsorship creation failed:', {
+      error: error.message,
+      sqlError: error.sqlMessage,
+      userId: req.user?.user_id,
+      body: req.body
+    });
+    
+    return res.status(500).json({ 
       success: false,
-      message: 'Internal server error',
-      error: error.message 
+      message: 'Failed to create sponsorship',
+      ...(process.env.NODE_ENV === 'development' && {
+        error: error.message,
+        details: error.sqlMessage
+      })
     });
   }
 };

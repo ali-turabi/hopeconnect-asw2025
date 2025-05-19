@@ -1,10 +1,11 @@
-const Donation = require('../models/donationModel');
-const DonationCategory = require('../models/donationCategoryModel');
-
+const Report = require('../models/reportModel');
+const path = require('path');
+const { sendEmail } = require(path.join(__dirname, '../utils/emailServices'));const db = require('../config/db');
 exports.createDonation = async (req, res) => {
   try {
-    const { donation_type, category_id, amount } = req.body;
+    const { donation_type, category_id, amount, orphanage_id } = req.body;
 
+    // Validate required fields
     if (!donation_type || !category_id) {
       return res.status(400).json({
         message: 'Donation type and category are required',
@@ -12,10 +13,22 @@ exports.createDonation = async (req, res) => {
       });
     }
 
+    // Validate monetary donations
     if (donation_type === 'money' && !amount) {
       return res.status(400).json({
         message: 'Amount is required for monetary donations'
       });
+    }
+
+    // Check if orphanage is active (if orphanage_id is provided)
+    if (orphanage_id) {
+      const isActive = await Donation.isOrphanageActive(orphanage_id);
+      if (!isActive) {
+        return res.status(403).json({
+          message: 'Cannot donate to inactive orphanage',
+          details: 'The specified orphanage is not currently active'
+        });
+      }
     }
 
     // Check category exists
@@ -30,7 +43,7 @@ exports.createDonation = async (req, res) => {
 
     const donationData = {
       user_id: userId,
-      orphanage_id: req.body.orphanage_id,
+      orphanage_id: orphanage_id || null, // Ensure null if not provided
       donation_type,
       category_id,
       amount,

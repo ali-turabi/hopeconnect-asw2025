@@ -257,7 +257,18 @@ static async getPendingDonationsForOrphanage(orphanageId) {
   }
 }
 
-
+static async isOrphanageActive(orphanageId) {
+  try {
+    const [rows] = await db.execute(
+      'SELECT is_active FROM orphanages WHERE orphanage_id = ?',
+      [orphanageId]
+    );
+    return rows.length > 0 && rows[0].is_active === 1;
+  } catch (error) {
+    console.error('Error checking orphanage status:', error);
+    throw error;
+  }
+}
 
 
 
