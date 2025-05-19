@@ -1,6 +1,6 @@
 const Report = require('../models/reportModel');
 const path = require('path');
-const { sendEmail } = require(path.join(__dirname, '../utils/emailServices'));const db = require('../config/db');
+const { sendEmail } = require(path.join(__dirname, '../utils/emailService'));const db = require('../config/db');
 exports.createDonation = async (req, res) => {
   try {
     const { donation_type, category_id, amount, orphanage_id } = req.body;

@@ -1,5 +1,8 @@
 const Report = require('../models/reportModel');
-const sendEmail = require('../utils/emailService');const db = require('../config/db');
+const sendEmail = require('../utils/emailService');
+const db = require('../config/db');
+console.log(require.resolve('../utils/emailService'));
+
 exports.createReport = async (req, res) => {
   try {
     const { receiver_user_id, content, image_url } = req.body;

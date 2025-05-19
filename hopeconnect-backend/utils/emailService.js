@@ -27,7 +27,7 @@ async function sendEmail(to, subject, htmlContent, textFallback = '') {
       html: htmlContent,
       text: textFallback || 'This email requires HTML support.'
     });
-    console.log('the emain is sent ');
+    console.log('the emain is sent');
   } catch (error) {
     console.error('❌ Email error:', error.message);
   }
