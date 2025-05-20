@@ -60,10 +60,6 @@ HopeConnect is a backend API designed to facilitate donations, sponsorships, and
 
 ## External APIs 🧩
 
-### OpenCage Geocoder API  
-**Purpose**: Location tracking for donations and deliveries.  
-**Usage**: Convert address to coordinates for mapping and delivery logic.
-
 ### Nodemailer  
 **Purpose**: Automated email system.  
 **Usage**: Notify users about donations, sponsorships, and emergencies.
@@ -75,7 +71,6 @@ HopeConnect is a backend API designed to facilitate donations, sponsorships, and
 - Node.js  
 - Express.js  
 - MySQL  
-- Sequelize ORM  
 - JWT  
 - Argon2  
 - Express Validator  
