@@ -135,6 +135,6 @@ nodemon app
 
 ## For More Details
 
-If you want to read more specific details about the project, you can jump to our [Wiki]([https://your-wiki-link.com](https://github.com/ali-turabi/hopeconnect-asw2025/wiki/HopeConnect)).
+If you want to read more specific details about the project, you can jump to our [Wiki](https://github.com/ali-turabi/hopeconnect-asw2025/wiki/HopeConnect).
 
 
