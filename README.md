@@ -101,10 +101,40 @@ Follow these steps to set up the project on your local machine:
 ```bash
 git clone https://github.com/ali-turabi/hopeconnect-asw2025.git
 cd hopeconnect-asw2025
+ ```
+
+### 2. Ensure the following environment variables are set to run the application:
 ```bash
----
-### 1. Clone the Repository
+JWT_SECRET=
+JWT_EXPIRES_IN=
+JWT_COOKIE_EXPIRES_IN_DAYS=
+EMAIL_USERNAME=
+EMAIL_PASSWORD=
+DB_HOST=
+DB_USER=
+DB_PASS=
+DB_PORT=
+```
+
+### 3. Install Dependencies
 
 ```bash
-git clone https://github.com/ali-turabi/hopeconnect-asw2025.git
-cd hopeconnect-asw2025
+npm i
+```
+
+### 4. make sure from existing database file
+
+```bash
+```
+
+### 5. Run the Application
+
+```bash
+nodemon app
+```
+
+## For More Details
+
+If you want to read more specific details about the project, you can jump to our [Wiki](https://your-wiki-link.com).
+
+
