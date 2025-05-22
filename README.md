@@ -1,6 +1,6 @@
 # HopeConnect – Supporting Orphaned Children in Gaza After War
 
-HopeConnect is a backend API designed to facilitate donations, sponsorships, and support services for orphaned children in Gaza after the war. The platform connects donors, sponsors, and volunteers with orphanages and children in need. The system ensures transparency, security, and efficiency in managing resources—making sure donations reach the intended recipients.
+HopeConnect is a backend API designed to facilitate donations, sponsorships, and support services for orphaned children in Gaza after the war. The platform connects donors, sponsors, and volunteers with orphanages and children in need. The system ensures transparency, security, and efficiency in managing resources making sure donations reach the intended recipients.
 
 ---
 
