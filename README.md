@@ -75,7 +75,12 @@ HopeConnect is a backend API designed to facilitate donations, sponsorships, and
 - Argon2  
 - Express Validator  
 - Nodemailer  
-- Postman (API Docs)  
+- Postman (API Docs)
+- bcryptjs
+- cors
+- dotenv
+- jsonwebtoken
+- mysql2
 - Git & GitHub  
 
 ---
