@@ -82,8 +82,8 @@ HopeConnect is a backend API designed to facilitate donations, sponsorships, and
 
 ## API Documentation 📄
 
-You can explore and test our API using [Postman Documentation](https://documenter.getpostman.com/view/36959610/2sB2qXmiR5)  
-*(Replace `#` with actual link when ready)*
+You can explore and test our API using Postman Documentation [here](https://documenter.getpostman.com/view/36959610/2sB2qXmiR5)  
+
 
 ---
 
